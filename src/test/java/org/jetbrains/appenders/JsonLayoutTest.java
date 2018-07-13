@@ -329,4 +329,5 @@ public class JsonLayoutTest {
         with(consoleWriter.toString())
             .assertThat("$.message", equalTo("H\"e\\l/\nl\ro\u0000W\bo\tr\fl\u0001d"));
     }
+
 }
