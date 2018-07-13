@@ -45,7 +45,6 @@ public class JsonLayout extends Layout {
     private void setDefaultFieldLabels() {
         fieldLabels.put("location.class", "class");
         fieldLabels.put("location.file", "file");
-        fieldLabels.put("location.file", "file");
         fieldLabels.put("location.line", "line");
         fieldLabels.put("location.method", "method");
 
@@ -82,31 +81,6 @@ public class JsonLayout extends Layout {
 
     private String getExceptionFieldLabel(String key) {
         return getFieldLabel("exception." + key);
-    }
-
-    private enum LocationField {
-        CLASS("class"),
-        FILE("file"),
-        LINE("line"),
-        METHOD("method");
-
-        private final String val;
-
-        LocationField(String val) {
-            this.val = val;
-        }
-    }
-
-    private enum ExceptionField {
-        CLASS("class"),
-        MESSAGE("message"),
-        STACKTRACE("stacktrace");
-
-        private final String val;
-
-        ExceptionField(String val) {
-            this.val = val;
-        }
     }
 
     private enum Field {
@@ -176,7 +150,7 @@ public class JsonLayout extends Layout {
 
     private final Map<String, String> fields;
     private final Set<Field> renderedFields;
-    private RenderedFieldLabels renderedFieldLabels;
+    private RenderedFieldLabels renderedFieldLabels = new RenderedFieldLabels();
 
     private final DateFormat dateFormat;
     private final Date date;

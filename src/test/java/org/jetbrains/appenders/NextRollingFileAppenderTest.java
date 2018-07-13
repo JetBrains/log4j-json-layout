@@ -27,9 +27,7 @@ public class NextRollingFileAppenderTest {
     Assert.assertTrue(home.isDirectory());
 
     appender = new NextRollingFileAppender();
-    JsonLayout layout = new JsonLayout();
-    layout.activateOptions();
-    appender.setLayout(layout);
+    appender.setLayout(new JsonLayout());
     appender.setMaxBackupIndex(5);
     appender.setMaximumFileSize(4);
     appender.setFile(new File(home, "log").getPath());
