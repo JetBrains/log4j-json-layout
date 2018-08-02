@@ -178,7 +178,7 @@ public class JsonLayout extends Layout {
     private final Set<Field> renderedFields;
     private RenderedFieldLabels renderedFieldLabels;
 
-    private final DateFormat dateFormat;
+    private DateFormat dateFormat;
     private final Date date;
     private final StringBuilder buf;
 
@@ -667,6 +667,14 @@ public class JsonLayout extends Layout {
 
     public void setExcludedFields(String excludedFields) {
         this.excludedFields = excludedFields;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = new SimpleDateFormat(dateFormat);
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
     }
 
     public void setHostName(String hostName) {
