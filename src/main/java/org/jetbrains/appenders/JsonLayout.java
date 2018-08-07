@@ -84,7 +84,7 @@ public class JsonLayout extends Layout {
                 usedFieldLabels.remove(key);
             }
 
-            if(key.equals(locationFieldKey)) {
+            if(key.startsWith(locationFieldKey)) {
                 usedFieldLabels.remove("location.class");
                 usedFieldLabels.remove("location.file");
                 usedFieldLabels.remove("location.line");
@@ -99,7 +99,7 @@ public class JsonLayout extends Layout {
                 add(key, defaultFieldLabels.get(key));
             }
 
-            if(key.equals(locationFieldKey)) {
+            if(key.startsWith(locationFieldKey)) {
                 add("location.class", "class");
                 add("location.file", "file");
                 add("location.line", "line");
