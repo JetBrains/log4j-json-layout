@@ -33,124 +33,124 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class JsonLayout extends Layout {
-
     private static final Pattern SEP_PATTERN = Pattern.compile("(?:\\p{Space}*?[,;]\\p{Space}*)+");
     private static final Pattern PAIR_SEP_PATTERN = Pattern.compile("(?:\\p{Space}*?[:=]\\p{Space}*)+");
 
     private static final char[] HEX_CHARS =
         {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-    private class FieldLabels {
-        private String locationFieldKey = "location";
+    private class LoggerField {
+        private String defaultLabel;
+        private String renderedLabel;
+        private boolean isEnabled = true;
 
-        private Map<String, String> defaultFieldLabels = new HashMap<String, String>();
-        private Map<String, String> usedFieldLabels = new HashMap<String, String>();
-
-        private void setDefaultFieldLabels() {
-            defaultFieldLabels.put("exception", "exception");
-            defaultFieldLabels.put("exception.class", "class");
-            defaultFieldLabels.put("exception.message", "message");
-            defaultFieldLabels.put("exception.stacktrace", "stacktrace");
-
-            defaultFieldLabels.put("level", "level");
-            defaultFieldLabels.put("location", "location");
-            defaultFieldLabels.put("logger", "logger");
-            defaultFieldLabels.put("message", "message");
-            defaultFieldLabels.put("mdc", "mdc");
-            defaultFieldLabels.put("ndc", "ndc");
-            defaultFieldLabels.put("host", "host");
-            defaultFieldLabels.put("path", "path");
-            defaultFieldLabels.put("tags", "tags");
-            defaultFieldLabels.put("@timestamp", "@timestamp");
-            defaultFieldLabels.put("thread", "thread");
-            defaultFieldLabels.put("@version", "@version");
+        LoggerField(String defaultName) {
+            this.defaultLabel = defaultName;
+            this.renderedLabel = defaultName;
         }
 
-        FieldLabels() {
-            setDefaultFieldLabels();
-            for(String key : defaultFieldLabels.keySet()) {
-                add(key, defaultFieldLabels.get(key));
-            }
-
-            remove(locationFieldKey);
+        LoggerField(String defaultName, String renderedLabel) {
+            this.defaultLabel = defaultName;
+            this.renderedLabel = renderedLabel;
         }
 
-        private void update(String key, String value) {
-            usedFieldLabels.put(key, value);
+        void updateRenderedLabel(String label) {
+            renderedLabel = label;
         }
 
-        private void remove(String key) {
-            if(usedFieldLabels.containsKey(key)) {
-                usedFieldLabels.remove(key);
-            }
-
-            if(key.startsWith(locationFieldKey)) {
-                usedFieldLabels.remove("location.class");
-                usedFieldLabels.remove("location.file");
-                usedFieldLabels.remove("location.line");
-                usedFieldLabels.remove("location.method");
-            }
-
-            Map<String, String> x = usedFieldLabels;
+        void disable() {
+            isEnabled = false;
         }
 
-        private void add(String key) {
-            if(defaultFieldLabels.containsKey(key)) {
-                add(key, defaultFieldLabels.get(key));
-            }
-
-            if(key.startsWith(locationFieldKey)) {
-                add("location.class", "class");
-                add("location.file", "file");
-                add("location.line", "line");
-                add("location.method", "method");
-            }
-        }
-
-        private void add(String key, String value) {
-            usedFieldLabels.put(key, value);
-        }
-
-        private String getFieldLabel(String key) {
-            if(usedFieldLabels.containsKey(key)) {
-                return usedFieldLabels.get(key);
-            } else {
-                return null;
-            }
-        }
-
-        private String getLocationFieldLabel(String key) {
-            return getFieldLabel("location." + key);
-        }
-
-        private String getExceptionFieldLabel(String key) {
-            return getFieldLabel("exception." + key);
+        void enable() {
+            isEnabled = true;
         }
     }
 
     private class RenderedFieldLabels {
-        String locationClass = fieldLabels.getLocationFieldLabel("class");
-        String locationFile = fieldLabels.getLocationFieldLabel("file");
-        String locationLine = fieldLabels.getLocationFieldLabel("line");
-        String locationMethod = fieldLabels.getLocationFieldLabel("method");
+        final LoggerField locationClass;
+        final LoggerField locationFile;
+        final LoggerField locationLine;
+        final LoggerField locationMethod;
 
-        String exceptionClass = fieldLabels.getExceptionFieldLabel("class");
-        String exceptionMessage = fieldLabels.getExceptionFieldLabel("message");
-        String exceptionStacktrace = fieldLabels.getExceptionFieldLabel("stacktrace");
+        final LoggerField exceptionClass;
+        final LoggerField exceptionMessage;
+        final LoggerField exceptionStacktrace;
 
-        String exception = fieldLabels.getFieldLabel("exception");
-        String level = fieldLabels.getFieldLabel("level");
-        String location = fieldLabels.getFieldLabel("location");
-        String logger = fieldLabels.getFieldLabel("logger");
-        String message = fieldLabels.getFieldLabel("message");
-        String mdc = fieldLabels.getFieldLabel("mdc");
-        String ndc = fieldLabels.getFieldLabel("ndc");
-        String host = fieldLabels.getFieldLabel("host");
-        String path = fieldLabels.getFieldLabel("path");
-        String tags = fieldLabels.getFieldLabel("tags");
-        String timestamp = fieldLabels.getFieldLabel("@timestamp");
-        String thread = fieldLabels.getFieldLabel("thread");
-        String version = fieldLabels.getFieldLabel("@version");
+        final LoggerField exception;
+        final LoggerField level;
+        final LoggerField location;
+        final LoggerField logger;
+        final LoggerField message;
+        final LoggerField mdc;
+        final LoggerField ndc;
+        final LoggerField host;
+        final LoggerField path;
+        final LoggerField tags;
+        final LoggerField timestamp;
+        final LoggerField thread;
+        final LoggerField version;
+
+        private final ArrayList<LoggerField> allFields = new ArrayList<LoggerField>();
+
+        RenderedFieldLabels() {
+            locationClass = new LoggerField("location.class", "class");
+            locationFile = new LoggerField("location.file", "file");
+            locationLine = new LoggerField("location.line", "line");
+            locationMethod = new LoggerField("location.method", "method");
+
+            exceptionClass = new LoggerField("exception.class", "class");
+            exceptionMessage = new LoggerField("exception.message", "message");
+            exceptionStacktrace = new LoggerField("exception.stacktrace", "stacktrace");
+
+            exception = new LoggerField("exception");
+            level = new LoggerField("level");
+            location = new LoggerField("location");
+            location.disable(); //By default location is not enabled as it's pretty expensive to resolve
+
+            logger = new LoggerField("logger");
+            message = new LoggerField("message");
+            mdc = new LoggerField("mdc");
+            ndc = new LoggerField("ndc");
+            host = new LoggerField("host");
+            path = new LoggerField("path");
+            tags = new LoggerField("tags");
+            timestamp = new LoggerField("@timestamp");
+            thread = new LoggerField("thread");
+            version = new LoggerField("@version");
+
+            List<LoggerField> locationFields = Arrays.asList(locationClass, locationFile, locationLine, locationMethod);
+            List<LoggerField> exceptionFields = Arrays.asList(exceptionClass, exceptionMessage, exceptionStacktrace);
+            List<LoggerField> rootFields = Arrays.asList(exception, level, location, logger, message, mdc, ndc, host, path, tags, timestamp, thread, version);
+
+            allFields.addAll(locationFields);
+            allFields.addAll(exceptionFields);
+            allFields.addAll(rootFields);
+        }
+
+        void disable(String fieldName) {
+            for (LoggerField field : allFields) {
+                if (field.defaultLabel.startsWith(fieldName)) {
+                    field.disable();
+                }
+            }
+        }
+
+        void enable(String fieldName) {
+            for (LoggerField field : allFields) {
+                if (field.defaultLabel.startsWith(fieldName)) {
+                    field.enable();
+                }
+            }
+        }
+
+        void updateLabel(String fieldName, String newLabel) {
+            for (LoggerField field : allFields) {
+                if (field.defaultLabel.equals(fieldName)) {
+                    field.updateRenderedLabel(newLabel);
+                }
+            }
+        }
     }
 
     private static final String VERSION = "1";
@@ -162,7 +162,6 @@ public class JsonLayout extends Layout {
     private String[] renamedFieldLabels;
 
     private final Map<String, String> fields;
-    private FieldLabels fieldLabels = new FieldLabels();
     private RenderedFieldLabels renderedFieldLabels = new RenderedFieldLabels();
 
     private final DateFormat dateFormat;
@@ -192,7 +191,7 @@ public class JsonLayout extends Layout {
         buf.append('{');
 
         boolean hasPrevField = false;
-        if (renderedFieldLabels.exception != null) {
+        if (renderedFieldLabels.exception.isEnabled) {
             hasPrevField = appendException(buf, event);
         }
 
@@ -201,99 +200,99 @@ public class JsonLayout extends Layout {
         }
         hasPrevField = appendFields(buf, event);
 
-        if (renderedFieldLabels.level !=  null) {
+        if (renderedFieldLabels.level.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.level, event.getLevel().toString());
+            appendField(buf, renderedFieldLabels.level.renderedLabel, event.getLevel().toString());
             hasPrevField = true;
         }
 
-        if (renderedFieldLabels.location != null) {
+        if (renderedFieldLabels.location.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
             hasPrevField = appendLocation(buf, event);
         }
 
-        if (renderedFieldLabels.logger != null) {
+        if (renderedFieldLabels.logger.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.logger, event.getLoggerName());
+            appendField(buf, renderedFieldLabels.logger.renderedLabel, event.getLoggerName());
             hasPrevField = true;
         }
 
-        if (renderedFieldLabels.message != null) {
+        if (renderedFieldLabels.message.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.message, event.getRenderedMessage());
+            appendField(buf, renderedFieldLabels.message.renderedLabel, event.getRenderedMessage());
             hasPrevField = true;
         }
 
-        if (renderedFieldLabels.mdc != null) {
+        if (renderedFieldLabels.mdc.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
             hasPrevField = appendMDC(buf, event);
         }
 
-        if (renderedFieldLabels.ndc != null) {
+        if (renderedFieldLabels.ndc.isEnabled) {
             String ndc = event.getNDC();
             if (ndc != null && !ndc.isEmpty()) {
                 if (hasPrevField) {
                     buf.append(',');
                 }
-                appendField(buf, renderedFieldLabels.ndc, event.getNDC());
+                appendField(buf, renderedFieldLabels.ndc.renderedLabel, event.getNDC());
                 hasPrevField = true;
             }
         }
 
-        if (renderedFieldLabels.host != null) {
+        if (renderedFieldLabels.host.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.host, hostName);
+            appendField(buf, renderedFieldLabels.host.renderedLabel, hostName);
             hasPrevField = true;
         }
 
-        if (renderedFieldLabels.path != null) {
+        if (renderedFieldLabels.path.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
             hasPrevField = appendSourcePath(buf, event);
         }
 
-        if (renderedFieldLabels.tags != null) {
+        if (renderedFieldLabels.tags.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
             hasPrevField = appendTags(buf, event);
         }
 
-        if (renderedFieldLabels.timestamp != null) {
+        if (renderedFieldLabels.timestamp.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
             date.setTime(event.getTimeStamp());
-            appendField(buf, renderedFieldLabels.timestamp, dateFormat.format(date));
+            appendField(buf, renderedFieldLabels.timestamp.renderedLabel, dateFormat.format(date));
             hasPrevField = true;
         }
 
-        if (renderedFieldLabels.thread != null) {
+        if (renderedFieldLabels.thread.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.thread, event.getThreadName());
+            appendField(buf, renderedFieldLabels.thread.renderedLabel, event.getThreadName());
             hasPrevField = true;
         }
 
-        if (renderedFieldLabels.version != null) {
+        if (renderedFieldLabels.version.isEnabled) {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.version, VERSION);
+            appendField(buf, renderedFieldLabels.version.renderedLabel, VERSION);
         }
 
         buf.append("}\n");
@@ -329,7 +328,7 @@ public class JsonLayout extends Layout {
             pathResolved = true;
         }
         if (path != null) {
-            appendField(buf, renderedFieldLabels.path, path);
+            appendField(buf, renderedFieldLabels.path.renderedLabel, path);
             return true;
         }
         return false;
@@ -386,7 +385,7 @@ public class JsonLayout extends Layout {
             return false;
         }
 
-        appendQuotedName(builder, renderedFieldLabels.tags);
+        appendQuotedName(builder, renderedFieldLabels.tags.renderedLabel);
         builder.append(":[");
         for (int i = 0, len = tags.length; i < len; i++) {
             appendQuotedValue(builder, tags[i]);
@@ -405,7 +404,7 @@ public class JsonLayout extends Layout {
             return false;
         }
 
-        appendQuotedName(buf, renderedFieldLabels.mdc);
+        appendQuotedName(buf, renderedFieldLabels.mdc.renderedLabel);
         buf.append(":{");
 
         for (Iterator<? extends Map.Entry<?, ?>> iter = entries.entrySet().iterator(); iter.hasNext(); ) {
@@ -428,12 +427,12 @@ public class JsonLayout extends Layout {
 
         boolean hasPrevField = false;
 
-        appendQuotedName(buf, renderedFieldLabels.location);
+        appendQuotedName(buf, renderedFieldLabels.location.renderedLabel);
         buf.append(":{");
 
         String className = locationInfo.getClassName();
         if (className != null) {
-            appendField(buf, renderedFieldLabels.locationClass, className);
+            appendField(buf, renderedFieldLabels.locationClass.renderedLabel, className);
             hasPrevField = true;
         }
 
@@ -442,7 +441,7 @@ public class JsonLayout extends Layout {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.locationFile, fileName);
+            appendField(buf, renderedFieldLabels.locationFile.renderedLabel, fileName);
             hasPrevField = true;
         }
 
@@ -451,7 +450,7 @@ public class JsonLayout extends Layout {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.locationMethod, methodName);
+            appendField(buf, renderedFieldLabels.locationMethod.renderedLabel, methodName);
             hasPrevField = true;
         }
 
@@ -460,7 +459,7 @@ public class JsonLayout extends Layout {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendField(buf, renderedFieldLabels.locationLine, lineNum);
+            appendField(buf, renderedFieldLabels.locationLine.renderedLabel, lineNum);
         }
 
         buf.append('}');
@@ -474,7 +473,7 @@ public class JsonLayout extends Layout {
             return false;
         }
 
-        appendQuotedName(buf, renderedFieldLabels.exception);
+        appendQuotedName(buf, renderedFieldLabels.exception.renderedLabel);
         buf.append(":{");
 
         boolean hasPrevField = false;
@@ -484,7 +483,7 @@ public class JsonLayout extends Layout {
         if (throwable != null) {
             String message = throwable.getMessage();
             if (message != null) {
-                appendField(buf, renderedFieldLabels.exceptionMessage, message);
+                appendField(buf, renderedFieldLabels.exceptionMessage.renderedLabel, message);
                 hasPrevField = true;
             }
 
@@ -493,7 +492,7 @@ public class JsonLayout extends Layout {
                 if (hasPrevField) {
                     buf.append(',');
                 }
-                appendField(buf, renderedFieldLabels.exceptionClass, className);
+                appendField(buf, renderedFieldLabels.exceptionClass.renderedLabel, className);
                 hasPrevField = true;
             }
         }
@@ -503,7 +502,7 @@ public class JsonLayout extends Layout {
             if (hasPrevField) {
                 buf.append(',');
             }
-            appendQuotedName(buf, renderedFieldLabels.exceptionStacktrace);
+            appendQuotedName(buf, renderedFieldLabels.exceptionStacktrace.renderedLabel);
             buf.append(":\"");
             for (int i = 0, len = stackTrace.length; i < len; i++) {
                 appendValue(buf, stackTrace[i]);
@@ -525,22 +524,27 @@ public class JsonLayout extends Layout {
     }
 
     public void activateOptions() {
+        renderedFieldLabels = new RenderedFieldLabels();
+
         if (includedFields != null) {
             String[] included = SEP_PATTERN.split(includedFields);
             for (String val : included) {
-                fieldLabels.add(val);
+                renderedFieldLabels.enable(val);
             }
         }
         if(renamedFieldLabels != null) {
             for(String fieldLabel : renamedFieldLabels) {
                 String[] field = PAIR_SEP_PATTERN.split(fieldLabel);
-                fieldLabels.update(field[0], field[1]);
+
+                if(field.length == 2) {
+                    renderedFieldLabels.updateLabel(field[0], field[1]);
+                }
             }
         }
         if (excludedFields != null) {
             String[] excluded = SEP_PATTERN.split(excludedFields);
             for (String val : excluded) {
-                fieldLabels.remove(val);
+                renderedFieldLabels.disable(val);
             }
         }
         if (tagsVal != null) {
@@ -561,8 +565,7 @@ public class JsonLayout extends Layout {
                 LogLog.error("Unable to determine name of the localhost", e);
             }
         }
-        ignoresThrowable = renderedFieldLabels.exception == null;
-        renderedFieldLabels = new RenderedFieldLabels();
+        ignoresThrowable = !renderedFieldLabels.exception.isEnabled;
     }
 
     @Override
