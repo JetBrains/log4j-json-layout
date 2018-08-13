@@ -110,7 +110,7 @@ public class JsonLayoutTest {
 
     @Test
     public void testIncludeFields() throws Exception {
-        consoleLayout.setRenamedFieldLabels("file:renamed_file,location:renamed_location,location.file:renamed_file");
+        consoleLayout.setRenamedFieldLabels("location:renamed_location,location.file:renamed_file");
         consoleLayout.setIncludedFields("location");
         consoleLayout.activateOptions();
 
@@ -118,6 +118,7 @@ public class JsonLayoutTest {
 
         with(consoleWriter.toString())
             .assertThat("$.location", nullValue())
+            .assertThat("$.renamed_location", notNullValue())
             .assertThat("$.renamed_location.class", equalTo(getClass().getName()))
             .assertThat("$.renamed_location.renamed_file", equalTo(getClass().getSimpleName() + ".java"))
             .assertThat("$.renamed_location.method", equalTo(testName.getMethodName()))
@@ -196,7 +197,7 @@ public class JsonLayoutTest {
 
     @Test
     public void testRenameFieldLabel() throws Exception {
-        consoleLayout.setRenamedFieldLabels("level:renamed_level,tags:renamed_tags");
+        consoleLayout.setRenamedFieldLabels("level:renamed_level,tags:renamed_tags,@version:@renamed_version");
         consoleLayout.setTags("json");
         consoleLayout.activateOptions();
 
@@ -206,7 +207,9 @@ public class JsonLayoutTest {
                 .assertThat("$.level", nullValue())
                 .assertThat("$.renamed_level", equalTo("INFO"))
                 .assertThat("$.tags", nullValue())
-                .assertThat("$.renamed_tags", hasItems("json"));
+                .assertThat("$.renamed_tags", hasItems("json"))
+                .assertThat("$.@version", nullValue())
+                .assertThat("$.@renamed_version", equalTo("1"));
     }
 
     @Test
@@ -315,7 +318,6 @@ public class JsonLayoutTest {
         packageLogger.setAdditivity(true);
 
         testLogger.info("Hello World");
-        System.out.println(fileWriter.toString());
 
         with(fileWriter.toString())
             .assertThat("$.path", equalTo(new File(fileAppender.getFile()).getCanonicalPath()));
@@ -329,4 +331,5 @@ public class JsonLayoutTest {
         with(consoleWriter.toString())
             .assertThat("$.message", equalTo("H\"e\\l/\nl\ro\u0000W\bo\tr\fl\u0001d"));
     }
+
 }
